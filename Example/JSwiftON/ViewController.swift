@@ -37,6 +37,8 @@ class ViewController: UIViewController
     override func viewDidLoad()
     {
         super.viewDidLoad();
+        let x = JSONItem(NSNumber(value: Double.nan));
+        NSLog("\(x.e?.description ?? "no error")");
         return;
     }
 }

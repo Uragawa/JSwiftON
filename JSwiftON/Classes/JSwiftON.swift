@@ -42,8 +42,7 @@ public struct JSONItem: Equatable //: NSObject
         }
     };
 
-    internal static let error = JSONItem(JSwiftON.error(code: .typeMismatch,
-                                                        info: nil));
+    internal static let error = JSONItem(jErr(code: .typeMismatch, info: nil));
 
     public var a: [JSONItem]?
     {
@@ -162,12 +161,9 @@ public struct JSONItem: Equatable //: NSObject
             {
                 case let .o(o):
                     return o[key] ??
-                           JSONItem(JSwiftON.error(code: .keyNotFound,
-                                                   info: [.key: key,
-                                                          .allKeys: o.keys]));
-                case let .e(e):
-                    return JSONItem(JSwiftON.error(code: .chained,
-                                                   info: [.ancestor: e]));
+                           JSONItem(jErr(code: .keyNotFound,
+                                         info: [.key: key, .allKeys: o.keys]));
+                case let .e(e): return plusNesting(e);
                 default: break;
             }
             return .error;
@@ -191,13 +187,11 @@ public struct JSONItem: Equatable //: NSObject
                     { return a[a.count + index]; }
                     else
                     {
-                        return JSONItem(JSwiftON.error(code: .indexOutOfBounds,
-                                                       info: [.index: index,
-                                                              .size: a.count]));
+                        return JSONItem(jErr(code: .indexOutOfBounds,
+                                             info: [.index: index,
+                                                    .size: a.count]));
                     }
-                case let .e(e):
-                    return JSONItem(JSwiftON.error(code: .chained,
-                                                   info: [.ancestor: e]));
+                case let .e(e): return plusNesting(e);
                 default: break;
             }
             return .error;
@@ -232,8 +226,7 @@ public struct JSONItem: Equatable //: NSObject
         else if let k = input as? [String: Any] { self.init(k); }
         else
         {
-            self.init(JSwiftON.error(code: .notRepresentable,
-                                     info: [.input: input]));
+            self.init(jErr(code: .notRepresentable, info: [.input: input]));
         }
         return;
     }
@@ -250,8 +243,10 @@ public struct JSONItem: Equatable //: NSObject
     {
         do
         {
-            let j = try JSONSerialization.data(withJSONObject: ["k": input],
-                                               options: []);
+            let ob: [String: Any] = ["k": input];
+            if (!JSONSerialization.isValidJSONObject(ob))
+            { throw JSwiftON.ErrorCodes.cannotExtract; }
+            let j = try JSONSerialization.data(withJSONObject: ob, options: []);
             guard let s = String(data: j, encoding: .utf8)
             else { throw JSwiftON.ErrorCodes.cannotExtract; }
             if (s.contains("true") || s.contains("false"))
@@ -259,11 +254,18 @@ public struct JSONItem: Equatable //: NSObject
             else { v = .f(input.doubleValue); }
         }
         catch
-        { v = .e(JSwiftON.error(code: .cannotExtract, info: [.input: input])); }
+        { v = .e(jErr(code: .cannotExtract, info: [.input: input])); }
         return;
     }
 
-    public init(_ input: Doubleable) { v = .f(input.asDouble); return; }
+    public init(_ input: Doubleable)
+    {
+        let dbl: Double = input.asDouble;
+        if (dbl.isNaN || dbl.isInfinite)
+        { v = .e(jErr(code: .cannotExtract, info: [.input: input]));}
+        else { v = .f(input.asDouble); }
+        return;
+    }
 
     public init(_ input: String) { v = .s(input); return; }
 
@@ -312,20 +314,14 @@ public class JSwiftON
     public enum ErrorKeys: String
     {
         case allKeys = "allKeys";
-        case ancestor = "ancestor";
         case key = "index";
         case index = "key";
         case input = "input";
+        case nesting = "nesting";
         case size = "size";
     }
 
     public static let errorDomain: String = "JSwiftON";
-
-    internal static func error(code: ErrorCodes, info: ErrorInfo?) -> NSError
-    {
-        return NSError(domain: errorDomain, code: code.rawValue,
-                       userInfo: info);
-    }
 
     public static func parse(_ input: Any) -> JSONItem
     {
@@ -355,4 +351,21 @@ public class JSwiftON
         else { return nil; }
         return parseData(d);
     }
+}
+
+internal func jErr(code: JSwiftON.ErrorCodes,
+                   info: JSwiftON.ErrorInfo?) -> NSError
+{
+    return NSError(domain: JSwiftON.errorDomain, code: code.rawValue,
+                   userInfo: info);
+}
+
+internal func plusNesting(_ e: NSError) -> JSONItem
+{
+    typealias Keys = JSwiftON.ErrorKeys;
+    var e0: [AnyHashable: Any]? = e.userInfo;
+    if let n = e0?[Keys.nesting] as? Int { e0?[Keys.nesting] = n + 1; }
+    else { e0?[Keys.nesting] = 1; }
+    return JSONItem(NSError(domain: e.domain, code: e.code,
+                            userInfo: e0));
 }

@@ -35,9 +35,17 @@ class JSwiftONSpec: QuickSpec
             {
                 expect(JSONItem(NSNumber(value: true)).b) == true;
                 expect(JSONItem(NSNumber(value: 34)).i) == 34;
+                expect(JSONItem(NSNumber(value: Double.nan)).e != nil) == true;
             }
             it("represents String")
             { expect(JSONItem("ciao").s) == "ciao"; }
+            it("rejects NaN")
+            {
+                expect(JSONItem(Double.nan).e != nil) == true;
+                expect(JSONItem(Double.signalingNaN).e != nil) == true;
+            }
+            it("rejects infinity")
+            { expect(JSONItem(Double.infinity.negated()).e != nil) == true; }
         }
         describe("Copy constructor")
         {
@@ -64,6 +72,10 @@ class JSwiftONSpec: QuickSpec
                 expect(JSONItem(2.0).i != nil) == true;
                 expect(JSONItem("ciao").b == nil) == true;
                 expect(JSONItem("ciao").s != nil) == true;
+                expect(JSONItem([]).o == nil) == true;
+                expect(JSONItem([]).a != nil) == true;
+                expect(JSONItem([:]).a == nil) == true;
+                expect(JSONItem([:]).o != nil) == true;
             }
         }
         describe("Equatability")
@@ -98,7 +110,10 @@ class JSwiftONSpec: QuickSpec
         {
             it("represents [Any]")
             {
-                let a: [Any] = [1, "1", 2, 3.0, 5, Int16(8), 13, Float(21)];
+                let a: [Any] = [1, "1", 2, 3.0, 5, Int16(8), 13, Float(21),
+                                Date(timeIntervalSince1970: 34.0),
+                                NSError(domain: "", code: 55, userInfo: nil),
+                                NSNull(), JSONItem("89")];
                 expect(JSONItem(a).a) == a.map(
                 { (e: Any) -> JSONItem in
                     return JSONItem(e);
@@ -165,18 +180,17 @@ class JSwiftONSpec: QuickSpec
                                         "n": 5, "a": UInt64(8),
                                         "cci": [1, 1, 2, 3, 5, 8, 13, 21]];
                 let e: NSError? = JSONItem(d)["cci"][10][3]["leo"].e;
-                expect(((e?.userInfo[Keys.ancestor] as?
-                         NSError)?.userInfo[Keys.ancestor] as?
-                        NSError)?.userInfo[Keys.size] as?
+                expect(e?.userInfo[Keys.size] as?
                        Int) == (d["cci"] as? [Int])?.count;
-                expect((JSONItem(4)["e"][2].e?.userInfo[Keys.ancestor] as?
-                        NSError)?.code) == Codes.typeMismatch.rawValue;
-                expect((JSONItem(4)[1]["x"].e?.userInfo[Keys.ancestor] as?
-                        NSError)?.code) == Codes.typeMismatch.rawValue;
-                expect((JSONItem([:])["e"][2].e?.userInfo[Keys.ancestor] as?
-                        NSError)?.code) == Codes.keyNotFound.rawValue;
-                expect((JSONItem([])[1]["x"].e?.userInfo[Keys.ancestor] as?
-                        NSError)?.code) == Codes.indexOutOfBounds.rawValue;
+                expect(e?.userInfo[Keys.nesting] as? Int) == 2;
+                expect(JSONItem(4)["e"][2].e?.code) ==
+                    Codes.typeMismatch.rawValue;
+                expect(JSONItem(4)[1]["x"].e?.code) ==
+                    Codes.typeMismatch.rawValue;
+                expect(JSONItem([:])["e"][2].e?.code) ==
+                    Codes.keyNotFound.rawValue;
+                expect(JSONItem([])[1]["x"].e?.code) ==
+                    Codes.indexOutOfBounds.rawValue;
             }
         }
         return;
