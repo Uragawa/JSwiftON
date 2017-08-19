@@ -1,0 +1,24 @@
+{
+  "name": "JSwiftON",
+  "version": "0.1.0",
+  "summary": "Very simple JSON convenience library.",
+  "description": "This is a very simple convenience library for using JSON from Swift. It was\nwritten at the point where I became bored with optional unwrapping and still\ndid not want to pull a 3rd-party dependency into my project.",
+  "homepage": "https://github.com/Uragawa/JSwiftON",
+  "license": {
+    "type": "MIT",
+    "file": "LICENSE"
+  },
+  "authors": {
+    "Alex": "chiozo.m@gmail.com"
+  },
+  "source": {
+    "git": "https://github.com/Uragawa/JSwiftON.git",
+    "tag": "0.1.0"
+  },
+  "platforms": {
+    "ios": "8.0",
+    "tvos": "9.0",
+    "osx": "10.11"
+  },
+  "source_files": "JSwiftON/Classes/**/*"
+}

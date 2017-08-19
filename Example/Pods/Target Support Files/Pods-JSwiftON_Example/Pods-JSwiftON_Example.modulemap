@@ -1,0 +1,6 @@
+framework module Pods_JSwiftON_Example {
+  umbrella header "Pods-JSwiftON_Example-umbrella.h"
+
+  export *
+  module * { export * }
+}

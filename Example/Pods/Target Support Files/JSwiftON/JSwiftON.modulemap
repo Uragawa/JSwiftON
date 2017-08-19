@@ -1,0 +1,6 @@
+framework module JSwiftON {
+  umbrella header "JSwiftON-umbrella.h"
+
+  export *
+  module * { export * }
+}
