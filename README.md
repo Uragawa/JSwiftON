@@ -1,12 +1,9 @@
 # JSwiftON
 
 [![CI Status](http://img.shields.io/travis/Alex/JSwiftON.svg?style=flat)](https://travis-ci.org/Alex/JSwiftON)
-[![Version](https://img.shields.io/cocoapods/v/JSwiftON.svg?style=flat)](http://cocoapods.org/pods/JSwiftON)
-[![License](https://img.shields.io/cocoapods/l/JSwiftON.svg?style=flat)](http://cocoapods.org/pods/JSwiftON)
-[![Platform](https://img.shields.io/cocoapods/p/JSwiftON.svg?style=flat)](http://cocoapods.org/pods/JSwiftON)
 
-JSwiftON is a very simple convenience library to use (read) JSON from Swift
-code. It allows the sort of subscript chaining we used to have in Objective-C
+JSwiftON is a very simple convenience library to use JSON from Swift code.
+It allows the sort of subscript chaining we used to have in Objective-C
 while still enforcing optional unwrapping for primitive types and supports
 Python-style negative subscripts for arrays.
 
@@ -19,12 +16,7 @@ Example directory first.
 
 ## Installation
 
-JSwiftON is available through [CocoaPods](http://cocoapods.org). To install
-it, simply add the following line to your Podfile:
-
-```ruby
-pod "JSwiftON"
-```
+[TBA]
 
 ## Author
 
