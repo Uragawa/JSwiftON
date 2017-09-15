@@ -8,8 +8,8 @@
 import Foundation;
 
 /* Important note: force-unwrap is being used in these setters because crashing
-   is expected behaviour if someone tries to set something to nil; the correct
-   procedure is to remove the key/element rather than set a nil.
+ is expected behaviour if someone tries to set something to nil; the correct
+ procedure is to remove the key/element rather than set a nil.
  */
 public struct JSONItem: Equatable //: NSObject
 {
@@ -19,9 +19,9 @@ public struct JSONItem: Equatable //: NSObject
         case b(Bool);
         case d(Date);
         case e(NSError);
-        case f(Double);
         case n(NSNull);
         case o([String: JSONItem]);
+        case p(NSNumber);
         case s(String);
 
         static func ==(lhs: Repr, rhs: Repr) -> Bool
@@ -32,9 +32,9 @@ public struct JSONItem: Equatable //: NSObject
                 case let (.b(l), .b(r)): return (l == r);
                 case let (.d(l), .d(r)): return (l == r);
                 case let (.e(l), .e(r)): return (l == r);
-                case let (.f(l), .f(r)): return (l == r);
                 case (.n, .n): return true;
                 case let (.o(l), .o(r)): return (l == r);
+                case let (.p(l), .p(r)): return (l == r);
                 case let (.s(l), .s(r)): return (l == r);
                 default: break;
             }
@@ -76,13 +76,20 @@ public struct JSONItem: Equatable //: NSObject
     {
         switch (v)
         {
-            case let .a(a): return "\(a)";
+            case let .a(a):
+                let descs: [String] = a.map(
+                { (i: JSONItem) -> String in return i.description; });
+                return "\(descs)";
             case let .b(b): return "\(b)";
             case let .d(d): return "\(d)";
             case let .e(e): return "[error: \(e)]";
-            case let .f(f): return "\(f)";
             case .n: return "[null]";
-            case let .o(o): return "\(o)";
+            case let .o(o):
+                var descs: [String: String] = [:]
+                for (key, value): (String, JSONItem) in o
+                { descs[key] = value.description; }
+                return "\(descs)";
+            case let .p(p): return "\(p)";
             case let .s(s): return s;
         }
     };
@@ -99,24 +106,24 @@ public struct JSONItem: Equatable //: NSObject
     {
         get
         {
-            switch (v) { case let .f(f): return f; default: break; }
+            switch (v) { case let .p(f): return f.doubleValue; default: break; }
             return nil;
         }
-        set { v = .f(newValue!); return; }
+        set { v = .p(NSNumber(value: newValue!)); return; }
     };
     public var i: Int?
     {
         get
         {
-            switch (v) { case let .f(i): return Int(i); default: break; }
+            switch (v) { case let .p(i): return i.intValue; default: break; }
             return nil;
         }
-        set { v = .f(Double(newValue!)); return; }
+        set { v = .p(NSNumber(value: newValue!)); return; }
     };
-    public var keys: LazyMapCollection<[String: JSONItem], String>?
+    public var keys: LazyMapCollection<[String: JSONItem], String>
     {
         switch (v) { case let .o(o): return o.keys; default: break; }
-        return nil;
+        return [:].keys;
     }
     public var n: NSNull?
     {
@@ -145,10 +152,10 @@ public struct JSONItem: Equatable //: NSObject
         }
         set { v = .s(newValue!); return; }
     };
-    public var values: LazyMapCollection<[String: JSONItem], JSONItem>?
+    public var values: LazyMapCollection<[String: JSONItem], JSONItem>
     {
         switch (v) { case let .o(o): return o.values; default: break; }
-        return nil;
+        return [:].values;
     }
 
     private var v: Repr;
@@ -161,8 +168,8 @@ public struct JSONItem: Equatable //: NSObject
             {
                 case let .o(o):
                     return o[key] ??
-                           JSONItem(jErr(code: .keyNotFound,
-                                         info: [.key: key, .allKeys: o.keys]));
+                        JSONItem(jErr(code: .keyNotFound,
+                                      info: [.key: key, .allKeys: o.keys]));
                 case let .e(e): return plusNesting(e);
                 default: break;
             }
@@ -225,9 +232,7 @@ public struct JSONItem: Equatable //: NSObject
         else if let k = input as? [String: JSONItem] { self.init(k); }
         else if let k = input as? [String: Any] { self.init(k); }
         else
-        {
-            self.init(jErr(code: .notRepresentable, info: [.input: input]));
-        }
+        { self.init(jErr(code: .notRepresentable, info: [.input: input])); }
         return;
     }
 
@@ -251,7 +256,7 @@ public struct JSONItem: Equatable //: NSObject
             else { throw JSwiftON.ErrorCodes.cannotExtract; }
             if (s.contains("true") || s.contains("false"))
             { v = .b(input.boolValue); }
-            else { v = .f(input.doubleValue); }
+            else { v = .p(input); }
         }
         catch
         { v = .e(jErr(code: .cannotExtract, info: [.input: input])); }
@@ -263,7 +268,7 @@ public struct JSONItem: Equatable //: NSObject
         let dbl: Double = input.asDouble;
         if (dbl.isNaN || dbl.isInfinite)
         { v = .e(jErr(code: .cannotExtract, info: [.input: input]));}
-        else { v = .f(input.asDouble); }
+        else { v = .p(NSNumber(value: input.asDouble)); }
         return;
     }
 

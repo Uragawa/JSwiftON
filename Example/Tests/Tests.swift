@@ -20,7 +20,7 @@ class JSwiftONSpec: QuickSpec
             }
             it("represents Doubleable")
             {
-                expect(JSONItem(1.0).f == 1.0) == true;
+                expect(JSONItem(18.99).f == 18.99) == true;
                 expect(JSONItem(523).i == 523) == true;
                 expect(JSONItem(UInt(6)).i == 6) == true;
             }
@@ -52,6 +52,29 @@ class JSwiftONSpec: QuickSpec
             it("copies itself")
             { expect(JSONItem(JSONItem("arrivederci")).s) == "arrivederci"; }
         }
+        describe("Setters")
+        {
+            var x = JSONItem(1);
+            x.a = [JSONItem(1), JSONItem(2), JSONItem(3)];
+            expect(x.a) == [JSONItem(1), JSONItem(2), JSONItem(3)];
+            x.b = false;
+            expect(x.b) == false;
+            x.d = Date(timeIntervalSince1970: 3.0);
+            expect(x.d) == Date(timeIntervalSince1970: 3.0);
+            x.e = NSError(domain: "", code: 112358, userInfo: nil);
+            expect(x.e) == NSError(domain: "", code: 112358, userInfo: nil);
+            x.f = 18.99;
+            expect(x.f) == 18.99;
+            x.i = 42;
+            expect(x.i) == 42;
+            x.n = NSNull();
+            expect(x.n != nil) == true;
+            x.o = ["q": JSONItem(1), "w": JSONItem(2), "e": JSONItem(3)];
+            expect(x.o) == ["q": JSONItem(1), "w": JSONItem(2),
+                            "e": JSONItem(3)];
+            x.s = "andiamo";
+            expect(x.s) == "andiamo";
+        }
         describe("Final optionals")
         {
             it("only returns a value compatible with the inner type")
@@ -72,9 +95,9 @@ class JSwiftONSpec: QuickSpec
                 expect(JSONItem(2.0).i != nil) == true;
                 expect(JSONItem("ciao").b == nil) == true;
                 expect(JSONItem("ciao").s != nil) == true;
-                expect(JSONItem([]).o == nil) == true;
+                expect(JSONItem([] as Any).o == nil) == true;
                 expect(JSONItem([]).a != nil) == true;
-                expect(JSONItem([:]).a == nil) == true;
+                expect(JSONItem([:] as Any).a == nil) == true;
                 expect(JSONItem([:]).o != nil) == true;
             }
         }
@@ -92,6 +115,9 @@ class JSwiftONSpec: QuickSpec
                 expect(JSONItem("buongiorno") != JSONItem("buonasera")) == true;
                 expect(JSONItem(true) != JSONItem("true")) == true;
                 expect(JSONItem(NSNull()) == JSONItem(NSNull())) == true;
+                expect(JSONItem([1, 2, 3]) == JSONItem([1, 2, 3])) == true;
+                expect(JSONItem(["a": 1, "b": 2]) ==
+                       JSONItem(["b": 2, "a": 1])) == true;
             }
             it("implements == for arrays")
             {
@@ -191,6 +217,81 @@ class JSwiftONSpec: QuickSpec
                     Codes.keyNotFound.rawValue;
                 expect(JSONItem([])[1]["x"].e?.code) ==
                     Codes.indexOutOfBounds.rawValue;
+            }
+        }
+        describe("String Descriptions")
+        {
+            it("prints \"description\" for all kinds of backing")
+            {
+                expect(JSONItem(true).description) == "true";
+                let d1 = Date(timeIntervalSince1970: 1.0);
+                expect(JSONItem(d1).description) == d1.description;
+                expect(JSONItem(18.99).description) == "18.99";
+                expect(JSONItem(523).description) == "523";
+                expect(JSONItem(UInt(6)).description) == "6";
+                let e = NSError(domain: "", code: 666, userInfo: nil);
+                expect(JSONItem(e).description.hasPrefix("[error")) == true;
+                expect(JSONItem(NSNull()).description) == "[null]";
+                expect(JSONItem(NSNumber(value: true)).description) == "true";
+                expect(JSONItem(NSNumber(value: 34)).description) == "34";
+                let nsnan = NSNumber(value: Double.nan);
+                expect(JSONItem(nsnan).description.hasPrefix("[error")) == true;
+                expect(JSONItem("ciao").description) == "ciao";
+                let a: [JSONItem] = [JSONItem(1), JSONItem(2), JSONItem(3)];
+                expect(JSONItem(a).description) == "\(["1", "2", "3"])";
+                let o: [String: JSONItem] = ["q": JSONItem(1),
+                                             "w": JSONItem(2)];
+                expect(JSONItem(o).description) == "\(["q": "1", "w": "2"])";
+            }
+            it("prints \"debugDescription\" for all kinds of backing")
+            {
+                expect(JSONItem(true).debugDescription) == "true";
+                let d1 = Date(timeIntervalSince1970: 1.0);
+                expect(JSONItem(d1).debugDescription) == d1.description;
+                expect(JSONItem(18.99).debugDescription) == "18.99";
+                expect(JSONItem(523).debugDescription) == "523";
+                expect(JSONItem(UInt(6)).debugDescription) == "6";
+                let e = NSError(domain: "", code: 666, userInfo: nil);
+                let pfx: String = "[error";
+                expect(JSONItem(e).debugDescription.hasPrefix(pfx)) == true;
+                expect(JSONItem(NSNull()).debugDescription) == "[null]";
+                let nstrue = NSNumber(value: true);
+                expect(JSONItem(nstrue).debugDescription) == "true";
+                expect(JSONItem(NSNumber(value: 34)).debugDescription) == "34";
+                let nsnan = NSNumber(value: Double.nan);
+                expect(JSONItem(nsnan).debugDescription.hasPrefix(pfx)) == true;
+                expect(JSONItem("ciao").debugDescription) == "ciao";
+                let a: [JSONItem] = [JSONItem(1), JSONItem(2), JSONItem(3)];
+                expect(JSONItem(a).debugDescription) == "\(["1", "2", "3"])";
+                let o: [String: JSONItem] = ["q": JSONItem(1),
+                                             "w": JSONItem(2)];
+                let jo = JSONItem(o);
+                expect(jo.debugDescription) == "\(["q": "1", "w": "2"])";
+            }
+        }
+        describe("External Parser")
+        {
+            it("parses dictionaries")
+            { expect(JSwiftON.parse(["q": 1, "w": 2, "e": 3])["w"].i) == 2; }
+            it("parses strings")
+            {
+                let json: String = "{\"q\": 1, \"w\": 2, \"e\": 3}";
+                expect(JSwiftON.parse(json)["w"].i) == 2;
+            }
+            it("rejects garbage")
+            {
+                let levi: String = "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5I" +
+                                   "GJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbm" +
+                                   "d1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWx" +
+                                   "zLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQs" +
+                                   "IHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsa" +
+                                   "WdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZm" +
+                                   "F0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGd" +
+                                   "lLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ug" +
+                                   "b2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=";
+                expect(JSwiftON.parse(Data(base64Encoded: levi, options: []) ??
+                                      Data()).e) != nil;
+                expect(JSwiftON.parse(UIView(frame: .zero)).e) != nil;
             }
         }
         return;
