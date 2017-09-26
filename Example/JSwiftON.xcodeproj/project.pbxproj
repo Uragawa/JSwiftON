@@ -15,6 +15,7 @@
 		607FACDD1AFB9204008FA782 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 607FACDC1AFB9204008FA782 /* Images.xcassets */; };
 		607FACE01AFB9204008FA782 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 607FACDE1AFB9204008FA782 /* LaunchScreen.xib */; };
 		607FACEC1AFB9204008FA782 /* Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607FACEB1AFB9204008FA782 /* Tests.swift */; };
+		FA9223121F7AF0680025D86B /* .travis.yml in Resources */ = {isa = PBXBuildFile; fileRef = FA9223111F7AF0680025D86B /* .travis.yml */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,6 +48,7 @@
 		CBBFA372BCF2C59747A0F314 /* Pods-JSwiftON_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-JSwiftON_Example.release.xcconfig"; path = "Pods/Target Support Files/Pods-JSwiftON_Example/Pods-JSwiftON_Example.release.xcconfig"; sourceTree = "<group>"; };
 		E21D209FEFDC41505AECF459 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		E3FAD1B91D2022E50B043930 /* Pods-JSwiftON_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-JSwiftON_Tests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-JSwiftON_Tests/Pods-JSwiftON_Tests.debug.xcconfig"; sourceTree = "<group>"; };
+		FA9223111F7AF0680025D86B /* .travis.yml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = .travis.yml; path = ../.travis.yml; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -132,6 +134,7 @@
 		607FACF51AFB993E008FA782 /* Podspec Metadata */ = {
 			isa = PBXGroup;
 			children = (
+				FA9223111F7AF0680025D86B /* .travis.yml */,
 				5DAA0F7883BFFD1701EE6E17 /* JSwiftON.podspec */,
 				E21D209FEFDC41505AECF459 /* README.md */,
 				616EEEC6EF5E64BA4CD0F6CB /* LICENSE */,
@@ -252,6 +255,7 @@
 			files = (
 				607FACDB1AFB9204008FA782 /* Main.storyboard in Resources */,
 				607FACE01AFB9204008FA782 /* LaunchScreen.xib in Resources */,
+				FA9223121F7AF0680025D86B /* .travis.yml in Resources */,
 				607FACDD1AFB9204008FA782 /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

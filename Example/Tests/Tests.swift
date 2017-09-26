@@ -183,6 +183,47 @@ class JSwiftONSpec: QuickSpec
                 expect(JSONItem(j).o) == j;
             }
         }
+        describe("Key/value interface")
+        {
+            let dkeys: [String] = ["f", "i", "b", "o", "n", "a", "cci"];
+            let dvalues: [Any] = [1, "1", 2, 3.0, 5, UInt64(8),
+                                  [1, 1, 2, 3, 5, 8, 13, 21]];
+            let d: [String: Any] = ["f": 1, "i": "1", "b": 2, "o": 3.0,
+                                    "n": 5, "a": UInt64(8),
+                                    "cci": [1, 1, 2, 3, 5, 8, 13, 21]];
+            it("retrieves keys")
+            {
+                var keys: [String] = [];
+                for k: String in JSONItem(d).keys { keys.append(k); }
+                expect(keys.count) == dkeys.count;
+                for v: Any in dkeys
+                {
+                    guard let i: Int = keys.index(where:
+                    { (n: Any) -> Bool in
+                        return JSONItem(n) == JSONItem(v);
+                    }) else { continue; }
+                    keys.remove(at: i);
+                }
+                expect(keys.isEmpty) == true;
+                expect(JSONItem(1).keys.isEmpty) == true;
+            }
+            it("retrieves values")
+            {
+                var values: [Any] = [];
+                for v: Any in JSONItem(d).values { values.append(v); }
+                expect(values.count) == dvalues.count;
+                for v: Any in dvalues
+                {
+                    guard let i: Int = values.index(where:
+                    { (n: Any) -> Bool in
+                        return JSONItem(n) == JSONItem(v);
+                    }) else { continue; }
+                    values.remove(at: i);
+                }
+                expect(values.isEmpty) == true;
+                expect(JSONItem(1).values.isEmpty) == true;
+            }
+        }
         describe("Subscripts")
         {
             it("chains subscripts")
@@ -217,6 +258,23 @@ class JSwiftONSpec: QuickSpec
                     Codes.keyNotFound.rawValue;
                 expect(JSONItem([])[1]["x"].e?.code) ==
                     Codes.indexOutOfBounds.rawValue;
+            }
+            it("has functional subscript setters")
+            {
+                let d: [String: Any] = ["f": 1, "i": "1", "b": 2, "o": 3.0,
+                                        "n": 5, "a": UInt64(8),
+                                        "cci": [1, 1, 2, 3, 5, 8, 13, 21]];
+                var j = JSONItem(d);
+                j["f"] = JSONItem(true);
+                expect(j["f"].b) == true;
+                j["i"]["b"] = JSONItem(2);
+                expect(j["i"].o?["b"] == nil) == true;
+                j["cci"][-1] = JSONItem(34);
+                expect(j["cci"][7].i) == 34;
+                j["cci"][7] = JSONItem(21);
+                expect(j["cci"][-1].i) == 21;
+                j[0] = JSONItem("fibo");
+                expect(j[0].e != nil) == true;
             }
         }
         describe("String Descriptions")
@@ -267,6 +325,29 @@ class JSwiftONSpec: QuickSpec
                                              "w": JSONItem(2)];
                 let jo = JSONItem(o);
                 expect(jo.debugDescription) == "\(["q": "1", "w": "2"])";
+            }
+        }
+        describe("Deep Unwrapping")
+        {
+            it("recursively unwraps JSONItem")
+            {
+                let date13 = Date(timeIntervalSince1970: 13.0);
+                let d: [String: Any] = ["f": true, "i": "1", "b": 2, "o": 3.0,
+                                        "n": Date(timeIntervalSince1970: 5.0),
+                                        "a": NSError(domain: "", code: 8,
+                                                     userInfo: nil),
+                                        "cci": [1, NSError(domain: "", code: 1,
+                                                           userInfo: nil),
+                                                NSNull(), 3.0, false, "8",
+                                                date13, 21],
+                                        "leo": ["nar": [NSNull(), 1, 1, 2, 3,
+                                                        ["do": NSNull()],
+                                                        [5, 8]]]];
+                let j = JSONItem(d);
+                expect(JSONItem(j.dictionary())) == j;
+                expect(JSONItem(JSONItem(1).array()) == JSONItem([])) == true;
+                expect(JSONItem(JSONItem(1).dictionary()) ==
+                       JSONItem([:])) == true;
             }
         }
         describe("External Parser")

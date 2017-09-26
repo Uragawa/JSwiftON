@@ -210,8 +210,8 @@ public struct JSONItem: Equatable //: NSObject
                 case var .a(a):
                     if ((index > -1) && (index < a.count))
                     { a[index] = newValue; v = .a(a); }
-                    else if ((index < 0) && ((a.count + index) < 1))
-                    { a[a.count - index] = newValue; v = .a(a); }
+                    else if ((index < 0) && ((a.count + index) > -1))
+                    { a[a.count + index] = newValue; v = .a(a); }
                 default: break;
             }
             return;
@@ -252,8 +252,8 @@ public struct JSONItem: Equatable //: NSObject
             if (!JSONSerialization.isValidJSONObject(ob))
             { throw JSwiftON.ErrorCodes.cannotExtract; }
             let j = try JSONSerialization.data(withJSONObject: ob, options: []);
-            guard let s = String(data: j, encoding: .utf8)
-            else { throw JSwiftON.ErrorCodes.cannotExtract; }
+            let s: String = String(data: j, encoding: .utf8) ??
+                            input.stringValue;
             if (s.contains("true") || s.contains("false"))
             { v = .b(input.boolValue); }
             else { v = .p(input); }
@@ -288,10 +288,59 @@ public struct JSONItem: Equatable //: NSObject
     }
 
     public init(_ input: [String: JSONItem]) { v = .o(input); return; }
-
+    
     public static func ==(lhs: JSONItem, rhs: JSONItem) -> Bool
     { return lhs.v == rhs.v; }
 
+    public func array() -> [Any]
+    {
+        var ret: [Any] = [];
+        switch (v)
+        {
+            case let .a(a):
+                for i: JSONItem in a
+                {
+                    switch (i.v)
+                    {
+                        case .a: ret.append(i.array());
+                        case let .b(b): ret.append(NSNumber(value: b));
+                        case let .d(d): ret.append(d);
+                        case let .e(e): ret.append(e);
+                        case let .n(n): ret.append(n);
+                        case .o: ret.append(i.dictionary());
+                        case let .p(p): ret.append(p);
+                        case let .s(s): ret.append(s);
+                    }
+                }
+            default: break;
+        }
+        return ret;
+    }
+    
+    public func dictionary() -> [String: Any]
+    {
+        var dic: [String: Any] = [:];
+        switch (v)
+        {
+            case let .o(o):
+                for (k, val): (String, JSONItem) in o
+                {
+                    switch (val.v)
+                    {
+                        case .a: dic[k] = val.array();
+                        case let .b(b): dic[k] = NSNumber(value: b);
+                        case let .d(d): dic[k] = d;
+                        case let .e(e): dic[k] = e;
+                        case let .n(n): dic[k] = n;
+                        case .o: dic[k] = val.dictionary();
+                        case let .p(p): dic[k] = p;
+                        case let .s(s): dic[k] = s;
+                    }
+                }
+            default: break;
+        }
+        return dic;
+    }
 }
 
 public func ==(lhs: [JSONItem], rhs: [JSONItem]) -> Bool
