@@ -7,6 +7,11 @@
 
 import Foundation;
 
+private extension RawRepresentable
+{
+    var v: RawValue { return rawValue; };
+}
+
 /* Important note: force-unwrap is being used in these setters because crashing
  is expected behaviour if someone tries to set something to nil; the correct
  procedure is to remove the key/element rather than set a nil.
@@ -120,7 +125,7 @@ public struct JSONItem: Equatable //: NSObject
         }
         set { v = .p(NSNumber(value: newValue!)); return; }
     };
-    public var keys: LazyMapCollection<[String: JSONItem], String>
+    public var keys: Dictionary<String, JSONItem>.Keys
     {
         switch (v) { case let .o(o): return o.keys; default: break; }
         return [:].keys;
@@ -152,7 +157,7 @@ public struct JSONItem: Equatable //: NSObject
         }
         set { v = .s(newValue!); return; }
     };
-    public var values: LazyMapCollection<[String: JSONItem], JSONItem>
+    public var values: Dictionary<String, JSONItem>.Values
     {
         switch (v) { case let .o(o): return o.values; default: break; }
         return [:].values;
@@ -410,16 +415,23 @@ public class JSwiftON
 internal func jErr(code: JSwiftON.ErrorCodes,
                    info: JSwiftON.ErrorInfo?) -> NSError
 {
-    return NSError(domain: JSwiftON.errorDomain, code: code.rawValue,
-                   userInfo: info);
+    var cvt: [String: Any]? = nil;
+    if let info: JSwiftON.ErrorInfo = info
+    {
+        cvt = .init(uniqueKeysWithValues: info.map(
+        { (key: JSwiftON.ErrorKeys, value: Any) -> (String, Any) in
+            return (key.v, value);
+        }));
+    }
+    return NSError(domain: JSwiftON.errorDomain, code: code.v, userInfo: cvt);
 }
 
 internal func plusNesting(_ e: NSError) -> JSONItem
 {
     typealias Keys = JSwiftON.ErrorKeys;
-    var e0: [AnyHashable: Any]? = e.userInfo;
-    if let n = e0?[Keys.nesting] as? Int { e0?[Keys.nesting] = n + 1; }
-    else { e0?[Keys.nesting] = 1; }
+    var e0: [String: Any]? = e.userInfo;
+    if let n = e0?[Keys.nesting.v] as? Int { e0?[Keys.nesting.v] = n + 1; }
+    else { e0?[Keys.nesting.v] = 1; }
     return JSONItem(NSError(domain: e.domain, code: e.code,
                             userInfo: e0));
 }

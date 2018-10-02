@@ -22,8 +22,25 @@ class GenCell: UITableViewCell
 
     func configure(_ item: JSONItem)
     {
+        typealias DocOptionKey = NSAttributedString.DocumentReadingOptionKey;
+        typealias DocType = NSAttributedString.DocumentType;
         titleLabel?.text = item["show_title"].s;
+        #if true
         summaryLabel?.text = item["summary"].s;
+        #else
+        let html: Data = ("<!doctype html><html><head></head><body>" +
+                          "<span style=\"font-family: sans-serif; " +
+                          "font-style: italic;\">\(item["summary"].s ?? "")" +
+                          "</span></body></html>").data(using: .utf8) ?? Data();
+        do
+        {
+            let opts: [DocOptionKey: Any] = [.documentType: DocType.html];
+            let attrText = try NSAttributedString(data: html, options: opts,
+                                                  documentAttributes: nil);
+            summaryLabel?.attributedText = attrText;
+        }
+        catch { summaryLabel?.text = item["summary"].s; NSLog("Exception"); }
+        #endif
         return;
     }
 }

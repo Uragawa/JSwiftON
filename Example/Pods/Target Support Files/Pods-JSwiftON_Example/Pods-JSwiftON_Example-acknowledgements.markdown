@@ -3,7 +3,7 @@ This application makes use of the following third party libraries:
 
 ## JSwiftON
 
-Copyright (c) 2017 Alex <kyo.felippe@encripta.com.br>
+Copyright (c) 2017 Alex Felippe Chiozo
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
